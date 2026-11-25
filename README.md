@@ -37,11 +37,6 @@ To develop an intelligent retrieval agent that can read and analyze multiple res
 ### PROGRAM:
 
 ```
-
-# STEP 1: Install Required Libraries
-%pip install llama-index-core llama-index-llms-openai llama-index-embeddings-openai nest_asyncio pypdf
-
-# STEP 2: Import Libraries and Configure API Key
 import os
 from getpass import getpass
 from pathlib import Path
@@ -71,7 +66,6 @@ if not OPENAI_API_KEY:
 
 os.environ["OPENAI_API_KEY"] = OPENAI_API_KEY
 
-# Configure LLM and Embedding Model
 embed_model = OpenAIEmbedding(
     model="text-embedding-3-small",
     api_key=OPENAI_API_KEY
@@ -88,25 +82,20 @@ Settings.llm = llm
 
 print("LlamaIndex configured successfully!")
 
-# STEP 3: Define Document Tool Function
 def get_doc_tools(file_path: str, name: str):
 
     if not Path(file_path).exists():
         raise FileNotFoundError(f"PDF not found: {file_path}")
 
-    # Load PDF document
     documents = SimpleDirectoryReader(
         input_files=[file_path]
     ).load_data()
 
-    # Split document into chunks
     splitter = SentenceSplitter(chunk_size=1024)
     nodes = splitter.get_nodes_from_documents(documents)
 
-    # Create Vector Index
     vector_index = VectorStoreIndex(nodes)
 
-    # Define Vector Query Function
     def vector_query(
         query: str,
         page_numbers: Optional[List[str]] = None
@@ -134,14 +123,12 @@ def get_doc_tools(file_path: str, name: str):
         response = query_engine.query(query)
         return str(response)
 
-    # Create Vector Query Tool
     vector_query_tool = FunctionTool.from_defaults(
         fn=vector_query,
         name=f"vector_tool_{name}",
         description=f"Search specific information in {name}"
     )
 
-    # Create Summary Index
     summary_index = SummaryIndex(nodes)
 
     summary_query_engine = summary_index.as_query_engine(
@@ -149,7 +136,6 @@ def get_doc_tools(file_path: str, name: str):
         use_async=True
     )
 
-    # Create Summary Tool
     summary_tool = QueryEngineTool.from_defaults(
         query_engine=summary_query_engine,
         name=f"summary_tool_{name}",
@@ -158,8 +144,6 @@ def get_doc_tools(file_path: str, name: str):
 
     return vector_query_tool, summary_tool
 
-
-# STEP 4: Load Research Papers and Create Tools
 papers = [
     "metagpt.pdf",
     "longlora.pdf",
@@ -195,8 +179,6 @@ for paper, name in zip(papers, paper_names):
 print("\nAll research papers loaded successfully!")
 print("Total tools created:", len(initial_tools))
 
-
-# STEP 5: Create Multidocument Retrieval Agent
 agent = FunctionAgent(
     tools=initial_tools,
     llm=llm,
@@ -210,8 +192,6 @@ agent = FunctionAgent(
 
 print("Multidocument Retrieval Agent created successfully!")
 
-
-# STEP 6: Define Question-Answering Function
 async def ask_question(question):
 
     response = await agent.run(user_msg=question)
@@ -221,7 +201,6 @@ async def ask_question(question):
     print(str(response))
 
 
-# STEP 7: Test the Agent with Different Questions
 await ask_question(
     "What is the main objective of the MetaGPT research paper?"
 )
